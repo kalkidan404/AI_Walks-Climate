@@ -1,95 +1,107 @@
 # 🌍 African Climate EDA — COP32
 
-An exploratory data analysis project examining climate patterns across **Ethiopia, Kenya, Uganda, Tanzania, and Rwanda** using daily climate data from 2015–2026.
+A data analysis project exploring climate patterns across five African countries using historical climate data from **2015–2026**.
 
-The project focuses on understanding temperature, precipitation, humidity, wind, and other climate variables through data cleaning, statistical analysis, visualization, and cross-country comparison.
+The project focuses on **data profiling, cleaning, exploratory data analysis (EDA), cross-country climate comparison, and interactive visualization with Streamlit**. The goal is to turn raw climate data into meaningful insights that can help explain differences in temperature, precipitation, extreme heat, and drought patterns across the region.
 
 ---
 
 ## 📌 Project Overview
 
-This project was developed as a data analysis exercise to explore climate conditions across five African countries and identify patterns that may be relevant to climate vulnerability discussions leading up to **COP32**.
+Climate change does not affect every region in the same way. Different countries experience different combinations of heat, rainfall variability, drought, and other climate stresses.
 
-The analysis follows a complete data workflow:
+This project analyzes climate data from:
+
+- 🇪🇹 Ethiopia
+- 🇰🇪 Kenya
+- 🇸🇩 Sudan
+- 🇳🇬 Nigeria
+- 🇹🇿 Tanzania
+
+The analysis covers the period **2015–2026**.
+
+The project follows a complete data-analysis workflow:
 
 ```text
 Raw Climate Data
        ↓
-Data Loading
+Data Profiling
        ↓
 Data Cleaning
        ↓
 Exploratory Data Analysis
        ↓
+Cross-Country Comparison
+       ↓
 Statistical Analysis
        ↓
-Visualization
-       ↓
-Country Comparison
-       ↓
 Climate Insights
+       ↓
+Interactive Streamlit Dashboard
 ```
 
-Each country is analyzed separately before the cleaned datasets are combined for cross-country comparison.
+---
+
+# 🎯 Project Objectives
+
+The main objectives are to:
+
+1. Clean and prepare climate datasets from five African countries.
+2. Explore temperature and precipitation patterns.
+3. Identify extreme heat and prolonged dry periods.
+4. Compare climate indicators across countries.
+5. Use statistical analysis to examine differences in temperature.
+6. Present the findings through an interactive Streamlit dashboard.
+7. Frame the findings in the context of climate vulnerability and COP32.
 
 ---
 
-## 🌍 Countries Analyzed
+# 📊 Climate Variables
 
-- 🇪🇹 Ethiopia
-- 🇰🇪 Kenya
-- 🇺🇬 Uganda
-- 🇹🇿 Tanzania
-- 🇷🇼 Rwanda
+The datasets contain several climate variables, including:
 
-The datasets contain daily observations covering approximately **2015–2026**.
+| Variable      | Description                     |
+| ------------- | ------------------------------- |
+| `T2M`         | Average temperature at 2 meters |
+| `T2M_MAX`     | Maximum temperature             |
+| `T2M_MIN`     | Minimum temperature             |
+| `T2M_RANGE`   | Daily temperature range         |
+| `PRECTOTCORR` | Corrected precipitation         |
+| `RH2M`        | Relative humidity               |
+| `WS2M`        | Wind speed at 2 meters          |
+| `WS2M_MAX`    | Maximum wind speed              |
+| `PS`          | Surface pressure                |
+| `QV2M`        | Specific humidity               |
+| `YEAR`        | Year                            |
+| `DOY`         | Day of year                     |
 
----
+Additional variables were created during preprocessing:
 
-## 📊 Dataset Variables
-
-The climate datasets contain variables including:
-
-| Variable      | Description                        | Unit   |
-| ------------- | ---------------------------------- | ------ |
-| `YEAR`        | Year of observation                | —      |
-| `DOY`         | Day of year                        | —      |
-| `T2M`         | Mean daily air temperature at 2m   | °C     |
-| `T2M_MAX`     | Maximum daily temperature          | °C     |
-| `T2M_MIN`     | Minimum daily temperature          | °C     |
-| `T2M_RANGE`   | Daily temperature range            | °C     |
-| `PRECTOTCORR` | Bias-corrected total precipitation | mm/day |
-| `RH2M`        | Relative humidity at 2m            | %      |
-| `WS2M`        | Mean wind speed at 2m              | m/s    |
-| `WS2M_MAX`    | Maximum wind speed at 2m           | m/s    |
-| `PS`          | Atmospheric surface pressure       | kPa    |
-| `QV2M`        | Specific humidity                  | g/kg   |
+- `country`
+- `date`
+- `month`
+- `extreme_heat`
+- `dry_day`
 
 ---
 
-# 🧹 Data Cleaning
+# 🧹 Data Cleaning & Preparation
 
-The same cleaning workflow was applied to each country's dataset.
+Before analysis, the raw datasets were processed to make them suitable for comparison.
 
-### 1. Load the dataset
+The cleaning process included:
 
-```python
-df = pd.read_csv("../data/raw_data/ethiopia (1).csv")
-```
+### 1. Adding country information
 
-The file path was changed accordingly for each country.
-
-### 2. Add country information
+Each dataset was assigned its corresponding country.
 
 ```python
 df["country"] = "Ethiopia"
 ```
 
-This allows the datasets to later be combined while retaining the country associated with each observation.
+### 2. Creating dates
 
-### 3. Create a datetime column
-
-The original dataset contains `YEAR` and `DOY` rather than a standard date.
+The original data contained `YEAR` and `DOY` (day of year), which were converted into actual dates.
 
 ```python
 df["date"] = pd.to_datetime(
@@ -98,353 +110,337 @@ df["date"] = pd.to_datetime(
 )
 ```
 
-A separate month column was then extracted:
+### 3. Creating the month variable
 
 ```python
 df["month"] = df["date"].dt.month
 ```
 
-### 4. Handle missing values
+This allowed monthly climate patterns to be analyzed.
 
-The datasets use `-999` as a missing-value sentinel.
+### 4. Handling missing values
+
+Missing-value codes such as `-999` were replaced with `NaN`.
 
 ```python
 df.replace(-999, np.nan, inplace=True)
 ```
 
-Missing values were then investigated using:
+### 5. Removing duplicates
 
-```python
-df.isna().sum()
-```
-
-and:
-
-```python
-df.isna().mean() * 100
-```
-
-Rows with more than 30% missing values were identified and removed where necessary, while remaining weather-variable missing values were handled using forward filling.
-
-### 5. Remove duplicate rows
-
-```python
-df.duplicated().sum()
-```
-
-Duplicate observations were removed with:
+Duplicate observations were identified and removed.
 
 ```python
 df.drop_duplicates(inplace=True)
 ```
 
----
+### 6. Missing-value analysis
 
-# 📈 Exploratory Data Analysis
+Missing percentages were calculated for the variables to identify columns requiring attention.
 
-The analysis examined several aspects of the climate data.
+### 7. Outlier analysis
 
-## Summary Statistics
-
-`df.describe()` was used to examine:
-
-- mean
-- standard deviation
-- minimum
-- maximum
-- quartiles
-- median
-
-This provided an initial understanding of the distribution and variability of each climate variable.
-
----
-
-# 🌡️ Temperature Analysis
-
-Monthly average `T2M` was calculated using:
+Z-scores were used to identify unusually extreme observations.
 
 ```python
-monthly_t2m = (
-    df.groupby(["YEAR", "month"])["T2M"]
-    .mean()
-    .reset_index()
-)
-```
-
-A datetime column was then created to produce a continuous time series.
-
-The resulting line chart shows monthly temperature patterns throughout the 2015–2026 period.
-
-The warmest and coolest months were identified using:
-
-```python
-peak_tempMax = monthly_t2m.loc[
-    monthly_t2m["T2M"].idxmax()
-]
-
-peak_tempMin = monthly_t2m.loc[
-    monthly_t2m["T2M"].idxmin()
-]
-```
-
-The analysis also examined whether temperatures showed obvious long-term increases, decreases, or unusual fluctuations.
-
----
-
-# 🌧️ Precipitation Analysis
-
-Monthly precipitation was analyzed to identify rainfall patterns and seasonal variation.
-
-For calendar-month analysis across the entire period:
-
-```python
-monthly_prec = (
-    df.groupby(["month"])["PRECTOTCORR"]
-    .sum()
-    .reset_index()
-)
-```
-
-The analysis examined:
-
-- overall rainfall distribution
-- rainy periods
-- peak rainfall months
-- relatively dry periods
-- seasonal variation
-
-Precipitation was also examined at the daily level to understand how rainfall is distributed across individual days.
-
----
-
-# 📉 Outlier Detection
-
-Z-scores were calculated for the major climate variables:
-
-```python
-cols = [
-    "T2M",
-    "T2M_MAX",
-    "T2M_MIN",
-    "PRECTOTCORR",
-    "RH2M",
-    "WS2M",
-    "WS2M_MAX"
-]
-
 Z_score = (
     df[cols] - df[cols].mean()
 ) / df[cols].std()
 ```
 
-Rows containing values with:
+Climate outliers were not automatically removed because extreme values can represent genuine climate events.
+
+---
+
+# 🔎 Exploratory Data Analysis
+
+The project examines several major climate patterns.
+
+## 🌡️ Temperature Trends
+
+Monthly average `T2M` was calculated for each country.
+
+The analysis includes:
+
+- monthly temperature trends
+- mean temperature
+- median temperature
+- standard deviation
+- comparison between countries
+
+A line chart is used to visualize monthly average temperature from **2015–2026**.
+
+---
+
+## 🌧️ Precipitation Variability
+
+`PRECTOTCORR` was analyzed to understand rainfall patterns and variability.
+
+The analysis includes:
+
+- mean precipitation
+- median precipitation
+- standard deviation
+- precipitation distributions
+- comparison between countries
+
+Side-by-side boxplots are used to compare precipitation distributions across the five countries.
+
+---
+
+# 🔥 Extreme Heat
+
+Extreme heat was defined as:
+
+```python
+df["extreme_heat"] = df["T2M_MAX"] > 35
+```
+
+The number of extreme-heat days was calculated for each country and year.
+
+This helps identify countries experiencing more frequent days above the selected temperature threshold.
+
+---
+
+# ☀️ Drought / Dry Spells
+
+A dry day was defined as:
+
+```python
+df["dry_day"] = df["PRECTOTCORR"] < 1
+```
+
+The analysis then identifies the longest consecutive sequence of dry days within each year.
+
+This provides an indicator of prolonged dry conditions rather than simply counting individual dry days.
+
+---
+
+# 📈 Cross-Country Comparison
+
+The five cleaned datasets are combined into a single dataframe to allow direct comparison.
+
+```python
+df = pd.concat(
+    [ethiopia, kenya, sudan, nigeria, tanzania],
+    ignore_index=True
+)
+```
+
+The comparison includes:
+
+- temperature
+- precipitation
+- extreme heat
+- dry spells
+- climate variability
+
+---
+
+# 🧪 Statistical Analysis
+
+A one-way ANOVA was performed to test whether mean temperature differs between the five countries.
+
+The test produced:
 
 ```text
-|Z| > 3
+F-statistic: 18938.75
+p-value: < 0.001
 ```
 
-were flagged as potential outliers.
+The result provides strong statistical evidence that mean `T2M` differs among the five countries.
 
-Outliers were **retained rather than automatically removed** because an extreme climate observation may represent a genuine weather event rather than an error.
+However, ANOVA only indicates that at least one group differs. It does not identify which specific pairs of countries differ.
+
+A post-hoc test such as **Tukey's HSD** would be required for pairwise comparisons.
 
 ---
 
-# 🔗 Correlation Analysis
+# 🌍 Key Climate Findings
 
-A correlation matrix was created for the numeric variables.
-
-```python
-numeric_df = df.select_dtypes(include="number")
-
-correlation = numeric_df.corr()
-```
-
-The correlation matrix was visualized using a heatmap.
-
-Correlation values range from:
-
-```text
--1 ←──────── 0 ────────→ +1
-negative       none       positive
-```
-
-The analysis was used to identify strong relationships between variables such as:
-
-- temperature and specific humidity
-- specific humidity and relative humidity
-- humidity and daily temperature range
-
-Correlation was interpreted as **association rather than causation**.
-
----
-
-# 🔵 Relationship Analysis
-
-Scatter plots were used to investigate relationships between individual variables.
-
-### Temperature vs Relative Humidity
-
-```python
-plt.scatter(
-    df["T2M"],
-    df["RH2M"]
-)
-```
-
-### Temperature Range vs Wind Speed
-
-```python
-plt.scatter(
-    df["T2M_RANGE"],
-    df["WS2M"]
-)
-```
-
-These plots provide a visual representation of whether the variables show positive, negative, or weak relationships.
-
----
-
-# 📊 Distribution Analysis
-
-The distribution of daily precipitation was examined using a histogram.
-
-```python
-plt.hist(
-    df["PRECTOTCORR"].dropna(),
-    bins=30
-)
-```
-
-Because precipitation can contain many low-rainfall observations and fewer heavy-rainfall events, the distribution was also considered for a logarithmic scale where appropriate.
-
-The analysis focused on identifying:
-
-- skewness
-- concentration of observations
-- variability
-- extreme rainfall events
-
----
-
-# 🫧 Bubble Chart
-
-A bubble chart was used to examine the relationship between temperature and relative humidity while representing precipitation using bubble size.
-
-```python
-plt.scatter(
-    df["T2M"],
-    df["RH2M"],
-    s=df["PRECTOTCORR"] * 10,
-    alpha=0.5
-)
-```
-
-Here:
-
-```text
-X-axis       → Temperature
-Y-axis       → Relative Humidity
-Bubble size  → Precipitation
-```
-
-This allows three variables to be explored in a single visualization.
-
----
-
-# 🌍 Cross-Country Comparison
-
-After completing the individual country analyses, the cleaned datasets were combined into a single DataFrame.
-
-The comparison examines:
+The analysis shows substantial differences in climate characteristics across the five countries.
 
 ### Temperature
 
-- monthly average temperature
-- overall mean
-- median
-- standard deviation
-- temperature trends over time
+The countries have noticeably different average temperature profiles.
+
+For example:
+
+- Ethiopia has a mean `T2M` of approximately **16.07°C**.
+- Nigeria has a mean of approximately **26.66°C**.
+- Tanzania has a mean of approximately **26.80°C**.
+- Sudan has a mean of approximately **28.76°C**.
+
+---
 
 ### Precipitation
 
+Rainfall variability also differs between countries.
+
+For example:
+
+- Ethiopia: approximately **6.29 mm/day** standard deviation
+- Nigeria: approximately **7.27 mm/day**
+- Sudan: approximately **3.06 mm/day**
+- Tanzania: approximately **8.00 mm/day**
+
+These differences demonstrate that the countries experience different precipitation regimes.
+
+---
+
+### Extreme Heat
+
+Sudan stands out strongly in the analyzed extreme-heat indicator.
+
+The dataset records approximately:
+
+**224.5 extreme-heat days per year**
+
+using the `T2M_MAX > 35°C` threshold.
+
+The other countries recorded substantially fewer such days under this definition.
+
+---
+
+### Dry Spells
+
+Sudan also shows substantially longer maximum consecutive dry periods.
+
+The average maximum annual dry spell was approximately:
+
+- Ethiopia — **37.9 days**
+- Nigeria — **35.8 days**
+- Sudan — **142.8 days**
+- Tanzania — **40.3 days**
+
+These indicators highlight substantial differences in exposure to heat and prolonged dryness.
+
+---
+
+# 🌐 COP32 Context
+
+The findings are intended to provide a data-driven view of climate exposure across the countries studied.
+
+The analysis suggests that climate stress takes different forms across the region:
+
+- temperature exposure
+- rainfall variability
+- extreme heat
+- prolonged dry periods
+
+The results should not be interpreted as a complete measure of climate vulnerability.
+
+Climate vulnerability also depends on factors such as:
+
+- population exposure
+- socioeconomic conditions
+- infrastructure
+- agricultural dependence
+- access to resources
+- adaptive capacity
+- existing climate policies
+
+Therefore, the climate indicators in this project provide **evidence about climate exposure**, rather than a complete vulnerability assessment.
+
+---
+
+# 🖥️ Streamlit Dashboard
+
+The next stage of the project is an interactive **Streamlit dashboard**.
+
+The dashboard will allow users to explore the climate data without directly interacting with the notebooks.
+
+Planned features include:
+
+### Country Selection
+
+Users will be able to select one or more countries:
+
+```text
+☑ Ethiopia
+☑ Kenya
+☑ Sudan
+☑ Nigeria
+☑ Tanzania
+```
+
+### Temperature Analysis
+
+Interactive visualizations for:
+
+- monthly average temperature
+- temperature distributions
+- yearly temperature patterns
+- country comparison
+
+### Precipitation Analysis
+
+Interactive visualizations for:
+
+- monthly precipitation
 - precipitation distributions
+- rainfall variability
+- country comparison
+
+### Climate Extremes
+
+Indicators for:
+
+- extreme-heat days
+- longest dry spells
+- yearly climate extremes
+
+### Statistical Summary
+
+The dashboard will display summary statistics such as:
+
 - mean
 - median
 - standard deviation
-- rainfall variability
+- minimum
+- maximum
 
-### Extreme Events
+### Interactive Exploration
 
-- days where `T2M_MAX > 35°C`
-- consecutive dry days where `PRECTOTCORR < 1 mm`
+Users will be able to change:
 
-### Statistical Testing
+- country
+- year range
+- climate variable
+- visualization
 
-Where appropriate, statistical tests such as:
-
-- one-way ANOVA
-- Kruskal–Wallis
-
-can be used to determine whether observed differences between countries are statistically significant.
+and explore the dataset dynamically.
 
 ---
 
-# 📁 Project Structure
+# 🛠️ Technologies
 
-```text
-AI-Walks-Climate/
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── data/
-│   └── raw_data/
-│       ├── ethiopia.csv
-│       ├── kenya.csv
-│       ├── uganda.csv
-│       ├── tanzania.csv
-│       └── rwanda.csv
-│
-├── notebooks/
-│   ├── ethiopia_eda.ipynb
-│   ├── kenya_eda.ipynb
-│   ├── uganda_eda.ipynb
-│   ├── tanzania_eda.ipynb
-│   ├── rwanda_eda.ipynb
-│   └── compare_countries.ipynb
-│
-├── tests/
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
-
-> File names may differ slightly depending on the local dataset names.
-
----
-
-# 🐍 Technologies Used
+The project uses:
 
 - **Python**
+- **Pandas**
+- **NumPy**
+- **Matplotlib**
+- **SciPy**
 - **Jupyter Notebook**
-- **Pandas** — data manipulation and analysis
-- **NumPy** — numerical operations
-- **Matplotlib** — data visualization
-- **Seaborn** — statistical visualization
-- **Git & GitHub** — version control
-- **GitHub Actions** — continuous integration
+- **Streamlit**
+- **Git**
+- **GitHub**
 
 ---
 
-# ⚙️ Setup
+# 📦 Installation
 
 Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd AI-Walks-Climate
+git clone https://github.com/kalkidan404/AI_Walks-Climate.git
+```
+
+Move into the project:
+
+```bash
+cd AI_Walks-Climate
 ```
 
 Create a virtual environment:
@@ -459,131 +455,179 @@ Activate it on Windows:
 venv\Scripts\activate
 ```
 
-Install the required packages:
+Install the dependencies:
 
 ```bash
-python -m pip install -r requirements.txt
-```
-
-Start Jupyter:
-
-```bash
-jupyter notebook
-```
-
-or:
-
-```bash
-jupyter lab
+pip install -r requirements.txt
 ```
 
 ---
 
-# 📦 Requirements
+# 📋 Requirements
 
-The main Python dependencies are:
+The project's Python dependencies are:
 
 ```text
 numpy
 pandas
 matplotlib
-seaborn
-jupyter
+scipy
+pytest
+streamlit
 ```
 
 ---
 
-# 🔀 Git Workflow
+# 🚀 Running the Streamlit App
 
-The project uses separate branches for different stages of the analysis.
+Once the dashboard has been implemented:
 
-Example country branches:
+```bash
+streamlit run app.py
+```
+
+Streamlit will start a local development server and provide a URL that can be opened in the browser.
+
+---
+
+# 📁 Project Structure
 
 ```text
-eda-ethiopia
-eda-kenya
-eda-uganda
-eda-tanzania
-eda-rwanda
+AI_Walks-Climate/
+│
+├── data/
+│   ├── raw_data/
+│   │   └── ...
+│   │
+│   └── processed_data/
+│       ├── ethiopia_clean.csv
+│       ├── kenya_clean.csv
+│       ├── sudan_clean.csv
+│       ├── nigeria_clean.csv
+│       └── tanzania_clean.csv
+│
+├── notebooks/
+│   ├── ethiopia_eda.ipynb
+│   ├── kenya_eda.ipynb
+│   ├── sudan_eda.ipynb
+│   ├── nigeria_eda.ipynb
+│   ├── tanzania_eda.ipynb
+│   └── compare_countries.ipynb
+│
+├── tests/
+│
+├── app.py
+│
+├── requirements.txt
+│
+├── .gitignore
+│
+└── README.md
 ```
 
-The cross-country analysis uses:
+---
+
+# 🔄 Git Workflow
+
+The project uses Git branches to organize development.
+
+A typical workflow is:
 
 ```text
-compare-countries
+Create branch
+     ↓
+Develop feature
+     ↓
+Commit changes
+     ↓
+Push branch
+     ↓
+Open Pull Request
+     ↓
+Review
+     ↓
+Merge into main
 ```
 
-This keeps the country-specific analysis separate before the datasets are synthesized.
+Examples:
+
+```bash
+git checkout -b eda-ethiopia
+```
+
+```bash
+git add .
+git commit -m "Complete Ethiopia EDA"
+```
+
+```bash
+git push origin eda-ethiopia
+```
 
 ---
 
-# 🔒 Data & Git
+# 📚 Project Learning Goals
 
-Raw and cleaned CSV files are excluded from GitHub where appropriate.
+This project is also part of a broader learning journey into **data analysis and AI**.
 
-The repository focuses on:
+Through the project, the main skills being practiced are:
 
-- analysis notebooks
-- code
-- documentation
-- visualizations
-- reproducible methodology
+- Python
+- Pandas
+- NumPy
+- data cleaning
+- exploratory data analysis
+- data visualization
+- statistical analysis
+- Git/GitHub
+- Jupyter
+- Streamlit
+- communicating data insights
 
-rather than storing large datasets directly in the repository.
-
----
-
-# 🎯 Project Goals
-
-The main goals of this project are to demonstrate the ability to:
-
-- load and understand real-world datasets
-- clean missing and duplicate data
-- work with dates and time series
-- calculate summary statistics
-- detect and interpret outliers
-- analyze correlations
-- create meaningful visualizations
-- interpret distributions
-- compare multiple datasets
-- communicate findings through data
-
-More broadly, the project is an introduction to using **Python for real-world data analysis** and forms part of a larger journey toward **data science and AI**.
-
----
-
-# 📌 Key Takeaway
-
-This project moves beyond simply creating graphs.
-
-The workflow is:
+The goal is not simply to produce charts, but to learn the complete process of going from:
 
 ```text
-Understand the data
-        ↓
-Clean the data
-        ↓
-Explore the data
-        ↓
-Find relationships
-        ↓
-Visualize patterns
-        ↓
-Interpret the results
-        ↓
-Compare countries
-        ↓
-Communicate evidence
+Raw Data
+   ↓
+Clean Data
+   ↓
+Analysis
+   ↓
+Evidence
+   ↓
+Insight
+   ↓
+Interactive Application
 ```
-
-The objective is to turn raw climate observations into **clear, reproducible, evidence-based insights**.
 
 ---
 
-## 📚 References
+# 🌱 Future Improvements
 
-- NASA POWER — Climate and meteorological data
-- World Bank Climate Change Knowledge Portal
-- IPCC — Climate Change Assessment Reports
-- World Meteorological Organization — Climate Reports
-- Python, Pandas, NumPy, Matplotlib, and Seaborn documentation
+Possible future additions include:
+
+- interactive map visualizations
+- additional African countries
+- more climate variables
+- advanced statistical tests
+- correlation analysis
+- trend analysis
+- climate anomaly detection
+- downloadable reports
+- Streamlit deployment
+- additional socioeconomic indicators
+- integration of external climate-vulnerability datasets
+
+---
+
+# 📌 Conclusion
+
+This project demonstrates how climate data can be transformed from raw observations into interpretable evidence.
+
+By combining **data cleaning, exploratory analysis, statistical testing, visualization, and an interactive Streamlit dashboard**, the project provides a practical framework for comparing climate patterns across African countries.
+
+The analysis also demonstrates an important principle in data science:
+
+> **Data can reveal patterns, but the quality of a conclusion depends on the quality and scope of the evidence behind it.**
+
+The climate indicators analyzed here provide one part of the picture. A broader assessment of climate vulnerability would require combining climate exposure with socioeconomic, infrastructural, and adaptive-capacity data.
